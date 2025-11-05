@@ -7,6 +7,7 @@ export default function Contact() {
     email: '',
     mesaj: ''
   });
+  const [gdprConsent, setGdprConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -25,6 +26,11 @@ export default function Contact() {
       return;
     }
 
+    if (!gdprConsent) {
+      alert('Te rugăm să accepți termenii și condițiile de prelucrare a datelor personale.');
+      return;
+    }
+
     if (formData.mesaj.length > 500) {
       alert('Mesajul nu poate depăși 500 de caractere.');
       return;
@@ -33,22 +39,26 @@ export default function Contact() {
     setIsSubmitting(true);
     
     try {
-      const formDataToSend = new URLSearchParams();
-      formDataToSend.append('nume', formData.nume);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('mesaj', formData.mesaj);
-
-      const response = await fetch('https://readdy.ai/api/form/d45autvgaed3g6l51ro0', {
+      const response = await fetch('https://formspree.io/f/xzzknpzw', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: formDataToSend
+        body: JSON.stringify({
+          ...formData,
+          gdprConsent: true
+        })
       });
 
       if (response.ok) {
         setSubmitStatus('success');
         setFormData({ nume: '', email: '', mesaj: '' });
+        setGdprConsent(false);
+        
+        // Reset success message after 5 seconds
+        setTimeout(() => {
+          setSubmitStatus('idle');
+        }, 5000);
       } else {
         setSubmitStatus('error');
       }
@@ -81,10 +91,8 @@ export default function Contact() {
           </p>
           
           <form 
-            id="contact-web360"
             onSubmit={handleSubmit}
             className="bg-black/30 backdrop-blur-sm rounded-2xl p-8 border border-white/10 space-y-6"
-            data-readdy-form
           >
             <div>
               <input
@@ -126,10 +134,43 @@ export default function Contact() {
               </div>
             </div>
             
+            {/* GDPR Checkbox */}
+            <div className="flex items-start space-x-3 bg-white/5 p-4 rounded-lg border border-white/10">
+              <input
+                type="checkbox"
+                id="gdprConsent"
+                checked={gdprConsent}
+                onChange={(e) => setGdprConsent(e.target.checked)}
+                required
+                className="mt-1 w-4 h-4 text-[#00FFF7] bg-black/50 border-white/20 rounded focus:ring-[#00FFF7] focus:ring-2 cursor-pointer"
+              />
+              <label htmlFor="gdprConsent" className="text-white/80 text-xs leading-relaxed cursor-pointer">
+                Am luat la cunoștință și sunt de acord cu{' '}
+                <a 
+                  href="/politica-de-confidentialitate" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#00FFF7] hover:text-[#E4C176] underline transition-colors"
+                >
+                  Politica de Confidențialitate
+                </a>
+                {' '}și{' '}
+                <a 
+                  href="/gdpr" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#00FFF7] hover:text-[#E4C176] underline transition-colors"
+                >
+                  prelucrarea datelor personale
+                </a>
+                {' '}în conformitate cu GDPR. Confirm că datele furnizate sunt corecte și că am dreptul de a le furniza în scopul contactării de către Web360Agency.
+              </label>
+            </div>
+            
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="group relative w-full px-8 py-4 bg-gradient-to-r from-[#E4C176] to-[#00FFF7] text-[#0B0C0F] font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-[#E4C176]/30 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
+              disabled={isSubmitting || !gdprConsent}
+              className="group relative w-full px-8 py-4 bg-gradient-to-r from-[#E4C176] to-[#00FFF7] text-[#0B0C0F] font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-[#E4C176]/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 whitespace-nowrap cursor-pointer"
             >
               <span className="relative z-10">
                 {isSubmitting ? 'Se trimite...' : 'Trimite mesajul'}
@@ -138,14 +179,24 @@ export default function Contact() {
             </button>
             
             {submitStatus === 'success' && (
-              <div className="text-center text-[#00FFF7] text-sm">
-                Mesajul a fost trimis cu succes! Îți vom răspunde în curând.
+              <div className="text-center p-4 bg-[#00FFF7]/20 border border-[#00FFF7]/40 rounded-lg">
+                <p className="text-[#00FFF7] text-sm font-semibold">
+                  ✓ Mesajul a fost trimis cu succes!
+                </p>
+                <p className="text-white/70 text-xs mt-1">
+                  Îți vom răspunde în curând.
+                </p>
               </div>
             )}
             
             {submitStatus === 'error' && (
-              <div className="text-center text-red-400 text-sm">
-                A apărut o eroare. Te rugăm să încerci din nou.
+              <div className="text-center p-4 bg-red-500/20 border border-red-500/40 rounded-lg">
+                <p className="text-red-400 text-sm font-semibold">
+                  ✗ A apărut o eroare
+                </p>
+                <p className="text-white/70 text-xs mt-1">
+                  Te rugăm să încerci din nou.
+                </p>
               </div>
             )}
           </form>
