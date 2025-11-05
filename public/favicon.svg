@@ -27,8 +27,7 @@
       </feMerge>
     </filter>
   </defs>
-  <!-- White background -->
-  <rect width="256" height="256" rx="40" fill="#FFFFFF"/>
+  <!-- Transparent background - removed the white rect -->
   <!-- Infinity symbol -->
   <!-- Left loop (cyan) -->
   <path d="
